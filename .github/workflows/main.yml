@@ -1,0 +1,45 @@
+name: Create and Commit Random File
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Create random file
+      run: |
+        # Generate a filename with current date and time
+        DATE_TIME=$(date +"%Y%m%d_%H%M%S")
+        RANDOM_FILE_NAME="random_${DATE_TIME}.txt"
+
+        # Generate random content
+        RANDOM_CONTENT=$(openssl rand -base64 32)
+
+        # Write random content to the file
+        echo "$RANDOM_CONTENT" > $RANDOM_FILE_NAME
+
+        # Output the filename for debugging
+        echo "Generated file: $RANDOM_FILE_NAME"
+        echo "FILE_NAME=$RANDOM_FILE_NAME" >> $GITHUB_ENV
+
+    - name: Configure Git
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+
+    - name: Commit and push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FILE_NAME: ${{ env.FILE_NAME }}
+      run: |
+        git add $FILE_NAME
+        git commit -m "Add random file $FILE_NAME"
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
